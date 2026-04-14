@@ -526,7 +526,7 @@ function convertFiles(fileTexts) {
           stanza("CURSYM", "USD"));
       }
     } else {
-      throw new Error("Unsupported currency: " + amount);
+      throw new Error("Unsupported currency in amount: " + amount);
     }
 
     amount = amount.replace(/,/g, "").replace(/\$/g, "").replace(/\s/g, "").replace(/\+/g, "");
@@ -660,14 +660,6 @@ function convertFiles(fileTexts) {
       }
     }
 
-    // Reset pos for next file (each file has its own headers)
-    // But keep venmoId, transactions, etc. across files
-    // Clear pos so next file gets its own headers
-    for (const k in pos) {
-      if (Object.prototype.hasOwnProperty.call(pos, k)) {
-        delete pos[k];
-      }
-    }
   }
 
   if (!transactions) {
