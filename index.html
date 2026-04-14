@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Venmo to OFX Converter</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: #f5f7fa;
+  color: #1a1a2e;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem 1rem;
+}
+h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.25rem;
+  color: #008cff;
+}
+.subtitle {
+  color: #555;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+.container {
+  width: 100%;
+  max-width: 680px;
+}
+.privacy-notice {
+  background: #e8f5e9;
+  border: 1px solid #a5d6a7;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  color: #2e7d32;
+  text-align: center;
+}
+.privacy-notice svg {
+  vertical-align: middle;
+  margin-right: 0.35rem;
+}
+.drop-zone {
+  border: 2px dashed #b0bec5;
+  border-radius: 12px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+  margin-bottom: 1.5rem;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: #008cff;
+  background: #f0f8ff;
+}
+.drop-zone p {
+  color: #666;
+  margin-bottom: 0.75rem;
+}
+.drop-zone .browse-btn {
+  display: inline-block;
+  background: #008cff;
+  color: #fff;
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.drop-zone .browse-btn:hover {
+  background: #006fcc;
+}
+#file-input {
+  display: none;
+}
+.file-list {
+  margin-bottom: 1.5rem;
+}
+.file-list h3 {
+  font-size: 0.9rem;
+  color: #555;
+  margin-bottom: 0.5rem;
+}
+.file-list ul {
+  list-style: none;
+  padding: 0;
+}
+.file-list li {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.file-list li .remove-file {
+  cursor: pointer;
+  color: #e53935;
+  font-weight: bold;
+  padding: 0 0.5rem;
+  border: none;
+  background: none;
+  font-size: 1rem;
+}
+.status-area {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  display: none;
+}
+.status-area h3 {
+  font-size: 0.9rem;
+  color: #008cff;
+  margin-bottom: 0.5rem;
+}
+.status-area .info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  padding: 0.2rem 0;
+  color: #444;
+}
+.status-area .info-row span:first-child {
+  font-weight: 600;
+}
+.error-area {
+  background: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  color: #c62828;
+  font-size: 0.85rem;
+  display: none;
+  white-space: pre-wrap;
+}
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.actions button {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+#convert-btn {
+  background: #008cff;
+  color: #fff;
+}
+#convert-btn:hover:not(:disabled) {
+  background: #006fcc;
+}
+#convert-btn:disabled {
+  background: #b0bec5;
+  cursor: not-allowed;
+}
+#download-btn {
+  background: #43a047;
+  color: #fff;
+  display: none;
+}
+#download-btn:hover {
+  background: #388e3c;
+}
+#clear-btn {
+  background: #eee;
+  color: #555;
+}
+#clear-btn:hover {
+  background: #ddd;
+}
+footer {
+  margin-top: auto;
+  padding-top: 2rem;
+  font-size: 0.8rem;
+  color: #999;
+  text-align: center;
+}
+footer a {
+  color: #008cff;
+  text-decoration: none;
+}
+footer a:hover {
+  text-decoration: underline;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Venmo → OFX Converter</h1>
+  <p class="subtitle">Convert Venmo CSV statements to OFX/QFX format for bookkeeping software</p>
+
+  <div class="privacy-notice">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+    </svg>
+    Your files never leave your browser. All processing happens locally on your device.
+  </div>
+
+  <div class="drop-zone" id="drop-zone">
+    <p>Drag &amp; drop Venmo CSV file(s) here</p>
+    <label class="browse-btn" for="file-input">Browse Files</label>
+    <input type="file" id="file-input" accept=".csv" multiple>
+  </div>
+
+  <div class="file-list" id="file-list-container" style="display:none;">
+    <h3>Selected Files</h3>
+    <ul id="file-list"></ul>
+  </div>
+
+  <div class="error-area" id="error-area"></div>
+
+  <div class="status-area" id="status-area">
+    <h3>Conversion Summary</h3>
+    <div class="info-row"><span>Account:</span> <span id="info-account">—</span></div>
+    <div class="info-row"><span>Format:</span> <span id="info-format">—</span></div>
+    <div class="info-row"><span>Transactions:</span> <span id="info-count">—</span></div>
+    <div class="info-row"><span>Date Range:</span> <span id="info-dates">—</span></div>
+    <div class="info-row"><span>Ending Balance:</span> <span id="info-balance">—</span></div>
+  </div>
+
+  <div class="actions">
+    <button id="convert-btn" disabled>Convert to OFX</button>
+    <button id="download-btn">Download OFX</button>
+    <button id="clear-btn">Clear</button>
+  </div>
+</div>
+
+<footer>
+  Based on <a href="https://github.com/mfisk/venmo2ofx" target="_blank" rel="noopener">mfisk/venmo2ofx</a>.
+  Source on <a href="https://github.com/TildenWinston/venmo-to-ofx" target="_blank" rel="noopener">GitHub</a>.
+</footer>
+
+<script>
+"use strict";
+
+// ─── State ───────────────────────────────────────────────────────────
+let selectedFiles = [];
+let ofxBlob = null;
+let ofxUrl = null;
+
+// ─── DOM refs ────────────────────────────────────────────────────────
+const dropZone = document.getElementById("drop-zone");
+const fileInput = document.getElementById("file-input");
+const fileListContainer = document.getElementById("file-list-container");
+const fileListEl = document.getElementById("file-list");
+const errorArea = document.getElementById("error-area");
+const statusArea = document.getElementById("status-area");
+const convertBtn = document.getElementById("convert-btn");
+const downloadBtn = document.getElementById("download-btn");
+const clearBtn = document.getElementById("clear-btn");
+
+// ─── UI helpers ──────────────────────────────────────────────────────
+function showError(msg) {
+  errorArea.textContent = msg;
+  errorArea.style.display = "block";
+}
+
+function hideError() {
+  errorArea.style.display = "none";
+  errorArea.textContent = "";
+}
+
+function updateFileList() {
+  if (selectedFiles.length === 0) {
+    fileListContainer.style.display = "none";
+    convertBtn.disabled = true;
+    return;
+  }
+  fileListContainer.style.display = "block";
+  convertBtn.disabled = false;
+  fileListEl.innerHTML = "";
+  selectedFiles.forEach(function(f, idx) {
+    const li = document.createElement("li");
+    li.textContent = f.name + " (" + (f.size / 1024).toFixed(1) + " KB)";
+    const btn = document.createElement("button");
+    btn.className = "remove-file";
+    btn.textContent = "×";
+    btn.addEventListener("click", function() {
+      selectedFiles.splice(idx, 1);
+      updateFileList();
+    });
+    li.appendChild(btn);
+    fileListEl.appendChild(li);
+  });
+}
+
+function resetOutput() {
+  statusArea.style.display = "none";
+  downloadBtn.style.display = "none";
+  hideError();
+  if (ofxUrl) {
+    URL.revokeObjectURL(ofxUrl);
+    ofxUrl = null;
+  }
+  ofxBlob = null;
+}
+
+function clearAll() {
+  selectedFiles = [];
+  updateFileList();
+  resetOutput();
+  fileInput.value = "";
+}
+
+// ─── File input / drag-drop ──────────────────────────────────────────
+function addFiles(files) {
+  resetOutput();
+  for (let i = 0; i < files.length; i++) {
+    const f = files[i];
+    if (!selectedFiles.some(function(s) { return s.name === f.name && s.size === f.size; })) {
+      selectedFiles.push(f);
+    }
+  }
+  updateFileList();
+}
+
+fileInput.addEventListener("change", function() {
+  addFiles(fileInput.files);
+});
+
+dropZone.addEventListener("click", function(e) {
+  if (e.target.tagName !== "LABEL") fileInput.click();
+});
+
+dropZone.addEventListener("dragover", function(e) {
+  e.preventDefault();
+  dropZone.classList.add("dragover");
+});
+dropZone.addEventListener("dragleave", function() {
+  dropZone.classList.remove("dragover");
+});
+dropZone.addEventListener("drop", function(e) {
+  e.preventDefault();
+  dropZone.classList.remove("dragover");
+  addFiles(e.dataTransfer.files);
+});
+
+clearBtn.addEventListener("click", clearAll);
+
+// ─── CSV parser ──────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = [];
+  let current = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+  while (i < text.length) {
+    const ch = text[i];
+    if (inQuotes) {
+      if (ch === '"') {
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+          continue;
+        } else {
+          inQuotes = false;
+          i++;
+          continue;
+        }
+      } else {
+        field += ch;
+        i++;
+      }
+    } else {
+      if (ch === '"') {
+        inQuotes = true;
+        i++;
+      } else if (ch === ',') {
+        current.push(field);
+        field = "";
+        i++;
+      } else if (ch === '\r') {
+        i++;
+      } else if (ch === '\n') {
+        current.push(field);
+        field = "";
+        rows.push(current);
+        current = [];
+        i++;
+      } else {
+        field += ch;
+        i++;
+      }
+    }
+  }
+  // last field/row
+  if (field || current.length > 0) {
+    current.push(field);
+    rows.push(current);
+  }
+  return rows;
+}
+
+// ─── XML escape ──────────────────────────────────────────────────────
+function xmlEscape(str) {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// ─── OFX helpers ─────────────────────────────────────────────────────
+function ofxDatetime(dt) {
+  const pad = function(n) { return n < 10 ? "0" + n : "" + n; };
+  return "" + dt.getFullYear() +
+    pad(dt.getMonth() + 1) +
+    pad(dt.getDate()) +
+    pad(dt.getHours()) +
+    pad(dt.getMinutes()) +
+    pad(dt.getSeconds());
+}
+
+function stanza(tag) {
+  const inner = Array.prototype.slice.call(arguments, 1);
+  return "<" + tag + ">" + inner.join("\n") + "</" + tag + ">\n";
+}
+
+// ─── Core conversion logic (ported from Python) ─────────────────────
+function convertFiles(fileTexts) {
+  let transactions = "";
+  let txnCount = 0;
+  let first = null;
+  let last = null;
+  let venmoId = null;
+  let defaultCurrency = null;
+  let balance = null;
+  let balanceTimestamp = null;
+  let detectedFormat = null;
+  const errors = [];
+
+  function generate(tag, value) {
+    if (typeof value === "string") {
+      transactions += stanza(tag, xmlEscape(value));
+    } else {
+      transactions += tag;
+    }
+  }
+
+  function parseRow(row, pos, isBiz) {
+    const val = {};
+    for (const k in pos) {
+      if (Object.prototype.hasOwnProperty.call(pos, k)) {
+        val[k] = (pos[k] < row.length) ? row[pos[k]] : "";
+      }
+    }
+
+    // Skip non-transaction rows (empty second column)
+    if (row[1] === "") {
+      if (val["Ending Balance"]) {
+        if (prevTimestamp && (!balanceTimestamp || prevTimestamp >= balanceTimestamp)) {
+          balance = val["Ending Balance"];
+          balanceTimestamp = prevTimestamp;
+        }
+      }
+      return;
+    }
+
+    // Start transaction
+    generate("<STMTTRN>");
+
+    if (val["Amount (total)"].startsWith("-")) {
+      generate("TRNTYPE", "DEBIT");
+    } else {
+      generate("TRNTYPE", "CREDIT");
+    }
+
+    let timestamp, id, amount;
+    if (isBiz) {
+      const dtStr = val["Date"] + " " + val["Time (UTC)"];
+      const parts = dtStr.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/);
+      if (!parts) {
+        throw new Error("Cannot parse business date: " + dtStr);
+      }
+      timestamp = new Date(
+        parseInt(parts[3]), parseInt(parts[1]) - 1, parseInt(parts[2]),
+        parseInt(parts[4]), parseInt(parts[5]), parseInt(parts[6])
+      );
+      id = val["Transaction ID"].replace(/"/g, "");
+      amount = val["Amount (net)"];
+      if (amount === "0" || amount === "") {
+        amount = val["Amount (total)"];
+      }
+    } else {
+      timestamp = new Date(val["Datetime"]);
+      if (isNaN(timestamp.getTime())) {
+        throw new Error("Cannot parse consumer date: " + val["Datetime"]);
+      }
+      id = val["ID"];
+      amount = val["Amount (total)"];
+    }
+
+    prevTimestamp = timestamp;
+
+    if (!first || timestamp < first) first = timestamp;
+    if (!last || timestamp > last) last = timestamp;
+
+    generate("DTPOSTED", ofxDatetime(timestamp));
+
+    // Currency handling
+    let currency = null;
+    if (amount.indexOf("$") !== -1) {
+      if (!defaultCurrency) {
+        defaultCurrency = "USD";
+      } else if (defaultCurrency !== "USD") {
+        currency = stanza("CURRENCY",
+          stanza("CURRATE", "1.0"),
+          stanza("CURSYM", "USD"));
+      }
+    } else {
+      throw new Error("Unsupported currency: " + amount);
+    }
+
+    amount = amount.replace(/,/g, "").replace(/\$/g, "").replace(/\s/g, "").replace(/\+/g, "");
+    generate("TRNAMT", amount);
+    generate("FITID", id);
+
+    // Determine other party
+    let otherParty = val["To"];
+    let transferTo = null;
+
+    if (val["Type"] === "Standard Transfer" && val["From"] === "(None)") {
+      otherParty = "VENMO-CASHOUT to " + val["Destination"];
+      transferTo = stanza("BANKACCTTO",
+        stanza("BANKID", val["Destination"]),
+        stanza("ACCTID", val["Destination"]),
+        stanza("ACCTTYPE", "CHECKING"));
+    } else if (val["Type"] === "Payment") {
+      if (!val["Amount (total)"].startsWith("-")) {
+        otherParty = val["From"];
+      }
+    } else if (val["Type"] === "Charge") {
+      if (val["Amount (total)"].startsWith("-")) {
+        otherParty = val["From"];
+      }
+    }
+
+    generate("NAME", otherParty);
+
+    if (val["Note"] !== "(None)") {
+      generate("MEMO", val["Note"]);
+    }
+
+    if (transferTo) {
+      generate(transferTo);
+    }
+
+    if (currency) {
+      generate(currency);
+    }
+
+    generate("</STMTTRN>\n");
+    txnCount++;
+
+    // Handle funding source / destination for secondary transactions
+    let dest = val["Destination"].replace("Venmo balance", "").replace("(None)", "");
+    let src = val["Funding Source"].replace("Venmo balance", "").replace("(None)", "");
+    let account = null;
+
+    if (dest && !src) {
+      account = dest;
+    } else if (src && !dest) {
+      account = src;
+    } else if (src && dest) {
+      errors.push("Did not expect source (" + src + ") and destination (" + dest + ") accounts");
+    }
+
+    if (account && val["Type"] !== "Standard Transfer") {
+      // Emit a second transaction for bank debit/credit
+      let secondaryAmount;
+      if (amount.startsWith("-")) {
+        secondaryAmount = amount.replace("-", "");
+      } else {
+        secondaryAmount = "-" + amount;
+      }
+
+      generate(stanza("STMTTRN",
+        stanza("TRNTYPE", "CREDIT"),
+        stanza("DTPOSTED", ofxDatetime(timestamp)),
+        stanza("TRNAMT", secondaryAmount),
+        stanza("FITID", id + ".1"),
+        stanza("NAME", "VENMO PAYMENT from " + account),
+        stanza("BANKACCTTO",
+          stanza("BANKID", account),
+          stanza("ACCTID", account),
+          stanza("ACCTTYPE", "CHECKING")),
+        currency || ""
+      ));
+      txnCount++;
+    }
+  }
+
+  // Process each file
+  let prevTimestamp = null;
+
+  for (let fi = 0; fi < fileTexts.length; fi++) {
+    const text = fileTexts[fi].text;
+    const fileName = fileTexts[fi].name;
+    const rows = parseCSV(text);
+    const pos = {};
+    let isBiz = false;
+    prevTimestamp = null;
+
+    for (let ri = 0; ri < rows.length; ri++) {
+      const row = rows[ri];
+      if (row.length === 0 || (row.length === 1 && row[0] === "")) continue;
+      // Skip fully blank rows (e.g., separator lines in some CSV exports)
+      if (row.every(function(c) { return c === ""; })) continue;
+
+      // Account Statement header
+      if (row[0].startsWith("Account Statement - (@")) {
+        const newId = row[0].split("(")[1].split(")")[0];
+        if (venmoId && venmoId !== newId) {
+          throw new Error(
+            "Cannot mix Venmo IDs " + venmoId + " and " + newId + "; exclude file '" + fileName + "'"
+          );
+        }
+        venmoId = newId;
+        continue;
+      }
+
+      // Account Activity header
+      if (row[0] === "Account Activity") {
+        continue;
+      }
+
+      // Column headers row
+      if (!Object.keys(pos).length) {
+        for (let ci = 0; ci < row.length; ci++) {
+          pos[row[ci]] = ci;
+        }
+        isBiz = "Amount (net)" in pos;
+        detectedFormat = isBiz ? "Business" : "Consumer";
+        continue;
+      }
+
+      // Data row
+      try {
+        parseRow(row, pos, isBiz);
+      } catch (e) {
+        throw new Error("Error parsing row " + (ri + 1) + " in " + fileName + ": " + e.message);
+      }
+    }
+
+    // Reset pos for next file (each file has its own headers)
+    // But keep venmoId, transactions, etc. across files
+    // Clear pos so next file gets its own headers
+    for (const k in pos) {
+      if (Object.prototype.hasOwnProperty.call(pos, k)) {
+        delete pos[k];
+      }
+    }
+  }
+
+  if (!transactions) {
+    throw new Error("No transactions found in the provided file(s).");
+  }
+
+  // Build full OFX document
+  const ofxHeader = '<?xml version="1.0" encoding="utf-8" ?>\n' +
+    '<?OFX OFXHEADER="200" VERSION="202" SECURITY="NONE" OLDFILEUID="NONE" NEWFILEUID="NONE"?>\n';
+
+  const ofxBody = stanza("OFX",
+    stanza("BANKMSGSRSV1",
+      stanza("STMTTRNRS",
+        stanza("TRNUID", "1001"),
+        stanza("STATUS",
+          stanza("CODE", "0"),
+          stanza("SEVERITY", "INFO")),
+        stanza("STMTRS",
+          stanza("CURDEF", defaultCurrency),
+          stanza("BANKACCTFROM",
+            stanza("BANKID", "Venmo"),
+            stanza("ACCTID", venmoId),
+            stanza("ACCTTYPE", "CHECKING")),
+          stanza("BANKTRANLIST",
+            stanza("DTSTART", ofxDatetime(first)),
+            stanza("DTEND", ofxDatetime(last)),
+            transactions.replace(/\n\n/g, "\n")),
+          stanza("LEDGERBAL",
+            stanza("BALAMT", balance || "0.00"),
+            stanza("DTASOF", ofxDatetime(balanceTimestamp || last)))
+        ))));
+
+  return {
+    ofxText: ofxHeader + ofxBody,
+    venmoId: venmoId,
+    format: detectedFormat,
+    txnCount: txnCount,
+    first: first,
+    last: last,
+    balance: balance,
+    errors: errors
+  };
+}
+
+// ─── Convert button handler ──────────────────────────────────────────
+convertBtn.addEventListener("click", function() {
+  resetOutput();
+  hideError();
+
+  if (selectedFiles.length === 0) {
+    showError("Please select at least one CSV file.");
+    return;
+  }
+
+  const readers = [];
+  const fileTexts = [];
+  let loaded = 0;
+
+  selectedFiles.forEach(function(f, idx) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      fileTexts[idx] = { name: f.name, text: e.target.result };
+      loaded++;
+      if (loaded === selectedFiles.length) {
+        doConvert(fileTexts);
+      }
+    };
+    reader.onerror = function() {
+      showError("Error reading file: " + f.name);
+    };
+    reader.readAsText(f);
+  });
+});
+
+function doConvert(fileTexts) {
+  try {
+    const result = convertFiles(fileTexts);
+
+    // Show warnings
+    if (result.errors.length > 0) {
+      showError("Warnings:\n" + result.errors.join("\n"));
+    }
+
+    // Update status area
+    document.getElementById("info-account").textContent = result.venmoId || "Unknown";
+    document.getElementById("info-format").textContent = result.format || "Unknown";
+    document.getElementById("info-count").textContent = result.txnCount;
+    document.getElementById("info-dates").textContent =
+      formatDate(result.first) + " — " + formatDate(result.last);
+    document.getElementById("info-balance").textContent = result.balance || "N/A";
+    statusArea.style.display = "block";
+
+    // Create blob for download
+    ofxBlob = new Blob([result.ofxText], { type: "application/x-ofx" });
+    ofxUrl = URL.createObjectURL(ofxBlob);
+    downloadBtn.style.display = "block";
+  } catch (e) {
+    showError(e.message);
+  }
+}
+
+function formatDate(dt) {
+  if (!dt) return "—";
+  return (dt.getMonth() + 1) + "/" + dt.getDate() + "/" + dt.getFullYear();
+}
+
+// ─── Download button handler ─────────────────────────────────────────
+downloadBtn.addEventListener("click", function() {
+  if (!ofxUrl) return;
+  const a = document.createElement("a");
+  a.href = ofxUrl;
+  const accountId = document.getElementById("info-account").textContent || "venmo";
+  a.download = accountId.replace("@", "") + "_transactions.ofx";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+});
+</script>
+
+</body>
+</html>
