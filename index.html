@@ -317,6 +317,7 @@ function clearAll() {
   updateFileList();
   resetOutput();
   fileInput.value = "";
+  convertBtn.style.display = "";
 }
 
 // ─── File input / drag-drop ──────────────────────────────────────────
@@ -713,6 +714,8 @@ convertBtn.addEventListener("click", function() {
     showError("Please select at least one CSV file.");
     return;
   }
+
+  convertBtn.style.display = "none";
 
   const readers = [];
   const fileTexts = [];
