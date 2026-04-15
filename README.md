@@ -43,12 +43,20 @@ A browser-based tool that converts Venmo CSV statement files into the widely-sup
 
 ## GitHub Pages Deployment
 
-This site is deployed automatically via GitHub Pages from the `main` branch. No build step is required — it's a static HTML file.
+This site is deployed automatically via GitHub Pages. The workflow assembles a combined artifact with both **prod** and **test** versions:
+
+| Version | Branch | URL |
+|---------|--------|-----|
+| Prod | `main` | `https://TildenWinston.github.io/venmo-to-ofx/` |
+| Test | `dev` | `https://TildenWinston.github.io/venmo-to-ofx/test/` |
+
+A push to either `main` or `dev` triggers a deployment. The workflow checks out both branches and places `main` at the site root and `dev` under `/test/`. If the `dev` branch does not exist, only the prod version is deployed.
 
 To deploy your own instance:
 1. Fork this repository
 2. Go to **Settings → Pages**
-3. Set source to **GitHub Actions** (or deploy from the `main` branch root)
+3. Set source to **GitHub Actions**
+4. (Optional) Create a `dev` branch for the test version
 
 ## Attribution
 
