@@ -1,0 +1,26 @@
+{
+  "name": "venmo-to-ofx",
+  "version": "1.0.0",
+  "description": "A browser-based tool that converts Venmo CSV statement files into the widely-supported [OFX/QFX format](https://financialdataexchange.org/FDX/About/OFX-Work-Group.aspx) for import into bookkeeping software such as [GnuCash](https://www.gnucash.org/), Quicken, and others.",
+  "main": "converter.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TildenWinston/venmo-to-ofx.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/TildenWinston/venmo-to-ofx/issues"
+  },
+  "homepage": "https://github.com/TildenWinston/venmo-to-ofx#readme",
+  "devDependencies": {
+    "vitest": "^4.1.4"
+  }
+}

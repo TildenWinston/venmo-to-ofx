@@ -41,6 +41,17 @@ A browser-based tool that converts Venmo CSV statement files into the widely-sup
 - Only fully supports USD transactions
 - Not tested with debit card transactions or unfulfilled requests
 
+## Testing
+
+Tests use [Vitest](https://vitest.dev/) and run against the conversion logic in `converter.js`.
+
+```bash
+npm install
+npm test
+```
+
+Tests run automatically on every pull request via GitHub Actions. The workflow must pass before a PR can be merged.
+
 ## GitHub Pages Deployment
 
 This site is deployed automatically via GitHub Pages from the `main` branch. No build step is required — it's a static HTML file.
