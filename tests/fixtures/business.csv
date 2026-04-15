@@ -1,0 +1,9 @@
+"Account Statement - (@bizuser) (Mar 1, 2024 - Mar 31, 2024)"
+,
+Account Activity
+,
+Transaction ID,Date,Time (UTC),Type,Status,Note,From,To,Amount (total),Amount (tip),Amount (tax),Tax Rate,Tax Exempt,Amount (fee),Amount (net),Funding Source,Destination,Beginning Balance,Ending Balance,Statement Period Venmo Fees,Terminal Location,Year to Date Venmo Fees,Disclaimer
+,,,,,,,,,,,,,,,,,,,$0.00,,,$0.00
+b200,03/10/2024,08:30:00,Payment,Complete,Invoice #1234,Client Corp,bizuser,"+ $1,200.00",,,,,,"+ $1,165.00",Venmo balance,(None),,,,,,
+b201,03/22/2024,16:45:00,Payment,Complete,Supplies,bizuser,Vendor LLC,"- $300.00",,,,,,0,Venmo balance,(None),,,,,,
+,,,,,,,,,,,,,,,,,,$865.00,,,,

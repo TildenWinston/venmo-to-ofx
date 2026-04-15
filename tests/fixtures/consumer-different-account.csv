@@ -1,0 +1,8 @@
+"Account Statement - (@otheruser) (Apr 1, 2024 - Apr 30, 2024)"
+,
+Account Activity
+,
+ID,Datetime,Type,Status,Note,From,To,Amount (total),Amount (tip),Amount (tax),Tax Rate,Tax Exempt,Funding Source,Destination,Beginning Balance,Ending Balance,Statement Period Venmo Fees,Terminal Location,Year to Date Venmo Fees,Disclaimer
+,,,,,,,,,,,,,,,,$0.00,,,$0.00,
+t200,2024-04-05T11:00:00,Payment,Complete,Coffee,OtherPerson,otheruser,"+ $5.00",,,,,Venmo balance,(None),,,,,,
+,,,,,,,,,,,,,,,$5.00,,,,
