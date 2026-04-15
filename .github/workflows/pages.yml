@@ -2,7 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "dev"]
   workflow_dispatch:
 
 permissions:
@@ -21,8 +21,36 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout main (prod)
         uses: actions/checkout@v4
+        with:
+          ref: main
+          path: prod
+
+      - name: Checkout dev (test)
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+          path: test
+        continue-on-error: true
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+
+          # Copy prod content from main branch to root
+          cp -a prod/. _site/
+          # Remove workflow files and git metadata from the artifact
+          rm -rf _site/.git _site/.github
+
+          # Copy test content from dev branch to /test/ subdirectory.
+          # The directory won't exist if the dev branch checkout was skipped
+          # (continue-on-error), so only the prod version is deployed.
+          if [ -d test ]; then
+            mkdir -p _site/test
+            cp -a test/. _site/test/
+            rm -rf _site/test/.git _site/test/.github
+          fi
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -30,7 +58,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment
